@@ -195,12 +195,17 @@ async def on_message(ctx:discord.Message):
 
     logger.info(f"Message detected from: {ctx.author.display_name}")
     reference: discord.Message = await ctx.channel.fetch_message(ctx.reference.message_id) if ctx.reference is not None else None
-    webhookDetect = reference.webhook_id if reference is not None and reference.webhook_id is not None else None
+    webhookDetect = reference.webhook_id if reference and reference.webhook_id else None
+    kuromiPing = reference.author if reference and reference.author is bot.user else None
     if webhookDetect:
         logger.info(f"webhook reference {webhookDetect}")
+    if kuromiPing:
+        logger.info(f"Main bot reference {kuromiPing}")
 
     if ctx.author.id == ctx.guild.me.id or ctx.webhook_id is not None:
         return
+    if not webhookDetect and not kuromiPing and bot.user not in ctx.mentions:
+        return 
     
     
     dataHandler = CacheManager(ctx.guild.id) #create object to handle db interaction
@@ -210,7 +215,7 @@ async def on_message(ctx:discord.Message):
     channelContextLength = int(dataHandler.globalChatTask[ctx.channel.id])
     logger.info(f"Continuing conversation with user: {ctx.author.display_name} (ID: {ctx.author.id}) at at {channelContextLength} context")
 
-    await chatWithAI(ctx, cache=channelContextLength) if not webhookDetect else await chatWithAI(ctx, name=reference.author.display_name, cache=channelContextLength)
+    await chatWithAI(ctx, cache=channelContextLength) if not webhookDetect else await chatWithAI(ctx, name=reference.author.display_name, cache=int(channelContextLength))
 
 
 
