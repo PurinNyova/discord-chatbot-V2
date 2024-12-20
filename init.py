@@ -8,9 +8,9 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 #environment
+load_dotenv(dotenv_path='.env')
 del os.environ["TOKENA"]
 del os.environ["DISCORD_CLIENT_IDA"]
-load_dotenv(dotenv_path='.env')
 TOKEN = os.getenv('TOKENA')
 logger.info(f"Token: {TOKEN}")
 MAX_CACHE = os.getenv('MAX_CACHE')
