@@ -180,6 +180,15 @@ async def globalchat(interaction: discord.Interaction, option: discord.app_comma
 @bot.tree.command(name="sendpersona", description="Send as persona to initialize a persona")
 @discord.app_commands.describe(name="Persona Name")
 async def sendpersona(interaction: discord.Interaction, name: str):
+    webhooks = await interaction.channel.webhooks()
+    existing_webhook = None
+    for webhook in webhooks:
+        if webhook.name == "Kuromi webhook":
+            existing_webhook = webhook
+            break
+
+    if existing_webhook is None:
+        await interaction.response.send_message("Persona disabled")
     logger.info("Send persona command sent")
     personaHandler = PersonalityManager(interaction.guild.id)
     names = personaHandler.returnPersonas()
