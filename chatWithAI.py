@@ -57,8 +57,6 @@ async def chatWithAI(ctx: Union[discord.Message, discord.Interaction], name: str
                 user_message_cache.appendleft(("assistant", messagex.content))
         else:
             user_message_cache.appendleft(("user", f"({messagex.author.display_name}): {messagex.content}"))
-                
-            
     logger.info(f"Cached the last {MAX_CACHE} messages from the channel.")
 
     async with ctx.channel.typing():
@@ -66,6 +64,8 @@ async def chatWithAI(ctx: Union[discord.Message, discord.Interaction], name: str
         content = [
             {"role": "system", "content":sys_msg}
         ]
+        if ctx.attachments:
+            content.append({"role": "system", "content": ctx.content})
 
         for role, msg_content in user_message_cache:
             content.append({"role": role, "content": msg_content})
@@ -131,9 +131,9 @@ async def openaiDescribe(ctx: discord.Message, image_url: str) -> str:
         max_tokens=300,
         stream=True,
         )
-        full_response = ""
-        async for chunk in response:
-            chunk_message = chunk['choices'][0].get('delta', {}).get('content', '')
-            if chunk_message:
-                full_response += chunk_message
-        return full_response
+        full_res = ""
+        async for chunk in response: 
+                chunk_message = chunk.choices[0].delta.content
+                if chunk_message:
+                    full_res += chunk_message
+        return full_res
