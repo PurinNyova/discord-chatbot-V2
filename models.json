@@ -1,0 +1,33 @@
+{
+    "0": {
+      "url": "http://llm.purinnova.online/v1",
+      "api_key": "x",
+      "model_name": "Purinnova Local Model"
+    },
+    "1": {
+      "url": "https://api.mistral.ai/v1/",
+      "api_key": "x",
+      "model_name": "mistral-large-latest"
+    },
+    "2": {
+      "url": "https://api.openai.com/v1",
+      "api_key": "x",
+      "model_name": "gpt-4o-mini"
+    },
+    "3": {
+      "url": "https://openrouter.ai/api/v1",
+      "api_key": "x",
+      "model_name": "nousresearch/hermes-3-llama-3.1-405b:free"
+    },
+    "4": {
+      "url": "https://api.mistral.ai/v1/",
+      "api_key": "x",
+      "model_name": "pixtral-large-latest"
+    },
+    "5": {
+      "url": "https://api.mistral.ai/v1/",
+      "api_key": "x",
+      "model_name": "open-mistral-nemo"
+    }
+  }
+  
