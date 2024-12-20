@@ -2,7 +2,7 @@ import discord
 from classes import PersonalityManager, CacheManager
 from functions import getTxt, load_model
 from init import logger, TOKEN, BOT_INVITE_URL, DISCORD_CLIENT_ID, MAX_CACHE
-from chatWithAI import chatWithAI
+from chatWithAI import chatWithAI, openaiDescribe
 from discord.ext import commands
 from typing import Optional
 from dbtest import read_cache_data
@@ -212,6 +212,18 @@ async def on_message(ctx:discord.Message):
     logger.info(dataHandler.globalChatTask)
     if ctx.channel.id not in dataHandler.globalChatTask:
         return
+    
+    if ctx.attachments:
+        # Find the first image attachment
+        image_attachment = next((att for att in ctx.attachments if att.content_type and "image" in att.content_type), None)
+        
+        if image_attachment:
+            # Call the openaiDescribe function to get the image description
+            image_description = await openaiDescribe(ctx, image_attachment.url)
+            
+            # Prepend the image description in parentheses to the message content
+            ctx.content = f"({image_description}) {ctx.content}"
+
     channelContextLength = int(dataHandler.globalChatTask[ctx.channel.id])
     logger.info(f"Continuing conversation with user: {ctx.author.display_name} (ID: {ctx.author.id}) at at {channelContextLength} context")
 
