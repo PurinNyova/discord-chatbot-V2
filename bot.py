@@ -158,7 +158,7 @@ async def globalchat(interaction: discord.Interaction, option: discord.app_comma
     dataHandler = CacheManager(interaction.guild.id)
     if bool(option.value):
         logger.info(f"Global chat enabling in {interaction.channel.id}: {contextlength} messages")
-        if contextlength > MAX_CACHE:
+        if contextlength > int(MAX_CACHE):
             await interaction.response.send_message(f"Exceeded max cache of {MAX_CACHE}")
         elif interaction.channel.id not in dataHandler.globalChatTask:
             dataHandler.globalChatTask[interaction.channel.id] = contextlength #appends channel id to dict with contextlength
