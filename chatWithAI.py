@@ -105,3 +105,35 @@ async def chatWithAI(ctx: Union[discord.Message, discord.Interaction], name: str
         except Exception as e:
         # Optional: Catch any other exceptions
             print(f"An unexpected error occurred: {e}")
+
+async def openaiDescribe(ctx: discord.Message, image_url: str) -> str:
+    models = load_model()
+    openai_model = models["2"]["model_name"]
+    client = openai.AsyncOpenAI(api_key=models["2"]["api_key"],base_url=models["2"]["url"])
+
+    async with ctx.channel.typing():
+        response = await client.chat.completions.create(
+        model=openai_model,
+        messages=[
+            {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": "What’s in this image? In detail"},
+                {
+                "type": "image_url",
+                "image_url": {
+                    "url": f"{image_url}",
+                },
+                },
+            ],
+            }
+        ],
+        max_tokens=300,
+        stream=True,
+        )
+        full_response = ""
+        async for chunk in response:
+            chunk_message = chunk['choices'][0].get('delta', {}).get('content', '')
+            if chunk_message:
+                full_response += chunk_message
+        return full_response
