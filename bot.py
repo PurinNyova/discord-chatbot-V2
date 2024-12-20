@@ -186,7 +186,7 @@ async def sendpersona(interaction: discord.Interaction, name: str):
     if name not in names:
         await interaction.response.send_message("Persona doesn't exist")
     else:
-        await interaction.response.send_message("Sending")
+        await interaction.response.send_message("...")
         await chatWithAI(interaction, name)
 
 
