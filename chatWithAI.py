@@ -33,7 +33,7 @@ async def chatWithAI(ctx: Union[discord.Message, discord.Interaction], name: str
     user_message_cache = deque(maxlen=cache)
     async for messagex in ctx.channel.history(limit=cache, oldest_first=False): #3/10/2024 limit of 20 is placeholder, change later. 20/12/2024: Finally changed
         logger.info(f"{messagex.author.display_name} {messagex.author.id} {webhook.id if webhook else None} target:{name}")
-        logger.info(f"author id is webhook? {messagex.author.id == webhook.id}")
+        logger.info(f"author id is webhook? {messagex.author.id == (webhook.id if webhook else None)}")
         logger.info(f"author name is webhook? {messagex.author.display_name == name}")
 
         for user in messagex.mentions:
