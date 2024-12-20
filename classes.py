@@ -7,9 +7,13 @@ class BaseManager:
     def __init__(self, origin, tableClass):
         self.Session = sessionmaker(bind=engine)
         self.session = self.Session()
+        self.tableClass = tableClass
         self.data: Union[Cache, Persona] = self.session.query(tableClass).filter_by(origin=origin).first()
         if self.data is None:
             self.createData(origin)
+    def __del__(self):
+        self.session.close()
+        print(f"{self.tableClass} Manager object is being deleted.")
     
     def createData(self, origin):
         raise NotImplementedError("Subclass must implement")
@@ -37,7 +41,7 @@ class CacheManager(BaseManager):
                 origin=origin,
                 activeSessions="[]",
                 globalChatTask="{}",
-                activeModel = "2",
+                activeModel = "1",
             )
         self.change_data(cache_record)
         self.data = self.session.query(Cache).filter_by(origin=origin).first()

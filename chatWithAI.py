@@ -92,7 +92,6 @@ async def chatWithAI(ctx: Union[discord.Message, discord.Interaction], name: str
                 chunk_message = chunk.choices[0].delta.content
                 if chunk_message:
                     full_res += chunk_message
-    
             await send_large_message(ctx, full_res) if name is None else await send_webhook(ctx, full_res, name)
 
         except openai.AuthenticationError as e:
