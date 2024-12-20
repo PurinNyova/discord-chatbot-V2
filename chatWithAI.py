@@ -8,7 +8,7 @@ from typing import Union
 import openai
 
 
-async def chatWithAI(ctx: Union[discord.Message, discord.Interaction], name: str=None, cache=MAX_CACHE):
+async def chatWithAI(ctx: Union[discord.Message, discord.Interaction], name: str=None, cache=int(MAX_CACHE)):
 
     #Create Personality object and load it with the intended persona
     personaHandler = PersonalityManager(ctx.guild.id)
@@ -35,6 +35,18 @@ async def chatWithAI(ctx: Union[discord.Message, discord.Interaction], name: str
         logger.info(f"{messagex.author.display_name} {messagex.author.id} {webhook.id} target:{name}")
         logger.info(f"author id is webhook? {messagex.author.id == webhook.id}")
         logger.info(f"author name is webhook? {messagex.author.display_name == name}")
+
+        for user in messagex.mentions:
+            messagex.content = messagex.content.replace(f'<@{user.id}>', f"@{user.name}")
+            messagex.content = messagex.content.replace(f'<@!{user.id}>', f"@{user.name}")
+
+        # Replace role mentions
+        for role in messagex.role_mentions:
+            messagex.content = messagex.content.replace(f'<@&{role.id}>', f"@{role.name}")
+
+        # Replace channel mentions
+        for channel in messagex.channel_mentions:
+            messagex.content = messagex.content.replace(f'<#{channel.id}>', f"@{channel.name}")
 
         #Grabs the message history, differentiates depending if it's a webhook or the bot itself
         if name and messagex.author.id == webhook.id and messagex.author.display_name == name:
