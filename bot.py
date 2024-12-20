@@ -227,7 +227,7 @@ async def on_message(ctx:discord.Message):
     channelContextLength = int(dataHandler.globalChatTask[ctx.channel.id])
     logger.info(f"Continuing conversation with user: {ctx.author.display_name} (ID: {ctx.author.id}) at at {channelContextLength} context")
 
-    await chatWithAI(ctx, cache=channelContextLength) if not webhookDetect else await chatWithAI(ctx, name=reference.author.display_name, cache=int(channelContextLength))
+    await chatWithAI(ctx, cache=int(channelContextLength)) if not webhookDetect else await chatWithAI(ctx, name=reference.author.display_name, cache=int(channelContextLength))
 
 
 
