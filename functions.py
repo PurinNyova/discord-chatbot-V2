@@ -10,7 +10,7 @@ def load_model() -> dict:
         models = json.load(jsonFile)    
     return models
 
-async def send_webhook(ctx: Union[discord.Message, discord.Interaction], full_res: str, name:str):
+async def send_webhook(ctx: Union[discord.Message, discord.Interaction], full_res: str, name:str) -> None:
     personaHandler = PersonalityManager(ctx.guild.id)
     personaHandler.getPersona(name)
     

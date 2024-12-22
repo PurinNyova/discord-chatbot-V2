@@ -77,7 +77,7 @@ class PersonalityManager(BaseManager):
         self.data = personality_record
         self.change_data()
     
-    def returnPersonas(self, personaObject=False) -> Union[Persona, list]: #Returns a list of all persona in a server
+    def returnPersonas(self, personaObject=False) -> Union[list[Persona], list]: #Returns a list of all persona in a server
         self.data = self.session.query(Persona).filter_by(origin=self.origin).all()
         return self.data if personaObject else list(map(lambda persona: persona.name, self.data))
     
