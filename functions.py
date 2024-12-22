@@ -5,7 +5,7 @@ from classes import PersonalityManager
 from typing import Union
 import requests
 
-def load_model():
+def load_model() -> dict:
     with open('models.json') as jsonFile:
         models = json.load(jsonFile)    
     return models
