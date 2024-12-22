@@ -24,7 +24,9 @@ async def on_ready():
     await bot.tree.sync()
 
 @bot.tree.command(name="modelpick", description="Pick an AI model")
-@discord.app_commands.choices(option=[discord.app_commands.Choice(name=modelsx["model_name"], value=str(i)) for i, modelsx in enumerate(load_model().values())])
+@discord.app_commands.choices(option=[discord.app_commands.Choice(
+    name=modelsx["model_name"],
+    value=str(i)) for i, modelsx in enumerate(load_model().values())])
 @discord.app_commands.describe(option="Available Models")
 async def modelpick(interaction: discord.Interaction, option: discord.app_commands.Choice[str]):
     dataHandler = CacheManager(interaction.guild.id)
@@ -109,8 +111,7 @@ async def persona(interaction: discord.Interaction, option: discord.app_commands
         if personas is None:
             await interaction.response.send_message("This server does not have any custom persona")
         embeds = [(discord.Embed(title=personaObject.name, description=personaObject.personality)) for personaObject in personas]
-        for i, embed in enumerate(embeds):
-            embed.set_image(url=str(personas[i].profilePicture))
+        [embed.set_image(url=str(personas[i].profilePicture)) for i,embed in enumerate(embeds)]
         await interaction.response.send_message(embeds=embeds)
     
 
@@ -234,8 +235,6 @@ async def on_message(ctx:discord.Message):
     logger.info(f"Continuing conversation with user: {ctx.author.display_name} (ID: {ctx.author.id}) at at {channelContextLength} context")
 
     await chatWithAI(ctx, cache=int(channelContextLength)) if not webhookDetect else await chatWithAI(ctx, name=reference.author.display_name, cache=int(channelContextLength))
-
-
 
 
 bot.run(TOKEN)
