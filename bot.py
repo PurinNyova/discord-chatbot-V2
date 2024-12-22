@@ -24,19 +24,12 @@ async def on_ready():
     await bot.tree.sync()
 
 @bot.tree.command(name="modelpick", description="Pick an AI model")
-@discord.app_commands.choices(option=[
-    discord.app_commands.Choice(name="Purinnova", value="0"),
-    discord.app_commands.Choice(name="mistral-large-latest", value="1"),
-    discord.app_commands.Choice(name="GPT-4o-Mini", value="2"),
-    discord.app_commands.Choice(name="nousresearch/hermes-3-llama-3.1-405b", value="3"),
-    discord.app_commands.Choice(name="pixtral-large-latest", value="4"),
-    discord.app_commands.Choice(name="open-mistral-nemo", value="5"),
-])
+@discord.app_commands.choices(option=[discord.app_commands.Choice(name=modelsx["model_name"], value=str(i)) for i, modelsx in enumerate(load_model().values())])
 @discord.app_commands.describe(option="Available Models")
 async def modelpick(interaction: discord.Interaction, option: discord.app_commands.Choice[str]):
     dataHandler = CacheManager(interaction.guild.id)
     models = load_model()
-    if option.value == "0":
+    if option.value == 0:
         logger.info(f"{models["0"]["url"]} selected, attempting connection.")
         try:
             response = requests.get(models["0"]["url"], timeout=5)  # 5 seconds timeout
@@ -67,12 +60,15 @@ async def modelpick(interaction: discord.Interaction, option: discord.app_comman
 @discord.app_commands.choices(option=[
     discord.app_commands.Choice(name="Add", value=0),
     discord.app_commands.Choice(name="Remove", value=1),
-    discord.app_commands.Choice(name="Modify", value=2)
+    discord.app_commands.Choice(name="Modify", value=2),
+    discord.app_commands.Choice(name="Show All", value=3)
 ])
 @discord.app_commands.describe(option="Operation", name="Name of persona", profilepicture="Imgur link of Persona (please add .png/.jpg)", personality="Pastebin link for personality", new_name="For modifying persona name, optional")
-async def persona(interaction: discord.Interaction, option: discord.app_commands.Choice[int], name: str, profilepicture: Optional[str], personality: Optional[str], new_name: Optional[str]):
+async def persona(interaction: discord.Interaction, option: discord.app_commands.Choice[int], name: Optional[str], profilepicture: Optional[str], personality: Optional[str], new_name: Optional[str]):
     personaHandler = PersonalityManager(interaction.guild.id)
     names = personaHandler.returnPersonas()
+    if option.value != 3 and name is None:
+        await interaction.response.send_message("Please input the name")
     if option.value == 0: #Add Persona
         if name in names: #Check if it already exists
             await interaction.response.send_message("Name already exist")
@@ -95,18 +91,28 @@ async def persona(interaction: discord.Interaction, option: discord.app_commands
             await interaction.response.send_message("Remove fail")
         else:
             await interaction.response.send_message(f"Remove success")
-    else: #Modify
+    elif option.value == 2: #Modify
         if name not in names:
             await interaction.response.send_message("Persona doesn't exist")
         personaHandler.getPersona(name)
-        personaHandler.data.name = new_name if new_name else name
-        personaHandler.data.personality = getTxt(personality) if personality else personaHandler.data.personality
-        personaHandler.data.profilePicture = profilepicture if profilepicture else personaHandler.data.profilePicture
+        personaHandler.modifyPersonality(
+            name = new_name if new_name else name,
+            personality = getTxt(personality) if personality else personaHandler.data.personality,
+            profile = profilepicture if profilepicture else personaHandler.data.profilePicture
+        )
         personaHandler.change_data()
         read_cache_data()
         logger.info("Data Modification Warning")
         await interaction.response.send_message(f"Modify done")
-        logger.info
+    else:
+        personas = personaHandler.returnPersonas(personaObject=True)
+        if personas is None:
+            await interaction.response.send_message("This server does not have any custom persona")
+        embeds = [(discord.Embed(title=personaObject.name, description=personaObject.personality)) for personaObject in personas]
+        for i, embed in enumerate(embeds):
+            embed.set_image(url=str(personas[i].profilePicture))
+        await interaction.response.send_message(embeds=embeds)
+    
 
 @bot.tree.command(name="personasystem", description="Toggle persona for bot for custom characters in this channel")
 @discord.app_commands.choices(option=[
@@ -115,31 +121,22 @@ async def persona(interaction: discord.Interaction, option: discord.app_commands
 ])
 @discord.app_commands.describe(option="Enable or Disable")
 async def personasystem(ctx: discord.Interaction, option: discord.app_commands.Choice[int]):
+    webhooks = await ctx.channel.webhooks()
+    existing_webhook = None
+    for webhook in webhooks:
+        if webhook.name == "Kuromi webhook":
+            existing_webhook = webhook
+            break
 
-    if bool(option.value):
-        webhooks = await ctx.channel.webhooks()
-        existing_webhook = None
-        for webhook in webhooks:
-            if webhook.name == "Kuromi webhook":
-                existing_webhook = webhook
-                break
-
+    if bool(option.value):    
         if existing_webhook is None:
             webhook = await ctx.channel.create_webhook(name="Kuromi webhook")
             logger.info(f'Webhook created! URL: {webhook.url}')
             await ctx.response.send_message("Persona enabled here")
-
         else:
             await ctx.response.send_message("Persona already enabled here")
     else:
         # Remove the webhook if it exists
-        webhooks = await ctx.channel.webhooks()
-        existing_webhook = None
-        for webhook in webhooks:
-            if webhook.name == "Kuromi webhook":
-                existing_webhook = webhook
-                break
-
         if existing_webhook is None:
             await ctx.response.send_message("Persona already disabled")
         else:
@@ -177,7 +174,7 @@ async def globalchat(interaction: discord.Interaction, option: discord.app_comma
     
     await interaction.response.send_message(f"Global chat {'enabled' if option.value else 'disabled'} in this channel{f' with {contextlength} messages context.' if option.value else ''}")
 
-@bot.tree.command(name="sendpersona", description="Send as persona to initialize a persona")
+@bot.tree.command(name="send", description="Trigger the bot to send a message")
 @discord.app_commands.describe(name="Persona Name")
 async def sendpersona(interaction: discord.Interaction, name: str):
     webhooks = await interaction.channel.webhooks()
