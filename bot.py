@@ -16,6 +16,19 @@ intents.messages = True  # Required for message.reference
 intents.invites = True
 bot = commands.Bot(command_prefix="s!", intents=intents)  # Using the Client class
 
+async def persona_autocomplete(
+    interaction: discord.Interaction, current: str
+) -> list[discord.app_commands.Choice[str]]:
+
+    dataHandler = PersonalityManager(interaction.guild.id)
+    personas = dataHandler.returnPersonas()
+
+
+    return [
+        discord.app_commands.Choice(name=persona, value=persona)
+        for persona in personas
+        if current.lower() in persona.lower() 
+    ]
 
 @bot.event
 async def on_ready():
@@ -66,6 +79,7 @@ async def modelpick(interaction: discord.Interaction, option: discord.app_comman
     discord.app_commands.Choice(name="Modify", value=2),
     discord.app_commands.Choice(name="Show All", value=3)
 ])
+@discord.app_commands.autocomplete(name=persona_autocomplete)
 @discord.app_commands.describe(option="Operation", name="Name of persona", profilepicture="Imgur link of Persona (please add .png/.jpg)", personality="Pastebin link for personality", new_name="For modifying persona name, optional")
 async def persona(interaction: discord.Interaction, option: discord.app_commands.Choice[int], name: Optional[str], profilepicture: Optional[str], personality: Optional[str], new_name: Optional[str]):
     personaHandler = PersonalityManager(interaction.guild.id)
@@ -90,10 +104,7 @@ async def persona(interaction: discord.Interaction, option: discord.app_commands
             await interaction.response.send_message("Persona doesn't exist")
         personaHandler.getPersona(name)
         personaHandler.change_data(delete=True)
-        if name in personaHandler.returnPersonas(): #Checks if it is added
-            await interaction.response.send_message("Remove fail")
-        else:
-            await interaction.response.send_message(f"Remove success")
+        await interaction.response.send_message(f"Remove success")
     elif option.value == 2: #Modify
         if name not in names:
             await interaction.response.send_message("Persona doesn't exist")
@@ -176,20 +187,6 @@ async def globalchat(interaction: discord.Interaction, option: discord.app_comma
     
     await interaction.response.send_message(f"Global chat {'enabled' if option.value else 'disabled'} in this channel{f' with {contextlength} messages context.' if option.value else ''}")
 
-async def persona_autocomplete(
-    interaction: discord.Interaction, current: str
-) -> list[discord.app_commands.Choice[str]]:
-
-    dataHandler = PersonalityManager(interaction.guild.id)
-    personas = dataHandler.returnPersonas()
-
-
-    return [
-        discord.app_commands.Choice(name=persona, value=persona)
-        for persona in personas
-        if current.lower() in persona.lower() 
-    ]
-
 @bot.tree.command(name="send", description="Trigger the bot to send a message")
 @discord.app_commands.describe(name="Persona Name")
 @discord.app_commands.autocomplete(name=persona_autocomplete)
@@ -210,7 +207,7 @@ async def sendpersona(interaction: discord.Interaction, name: Optional[str]):
         if name not in names:
             await interaction.response.send_message("Persona doesn't exist")
         else:
-            await interaction.response.send_message("...")
+            await interaction.response.send_message(content="Sending", ephemeral=True)
             await chatWithAI(interaction, name)
     else:
         await interaction.response.send_message(content="Sending", ephemeral=True)
