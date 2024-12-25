@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, VARCHAR
+from sqlalchemy import create_engine, Column, Integer, String, VARCHAR, Boolean
 from sqlalchemy.orm import declarative_base
 
 #SQL Database setup
@@ -12,6 +12,7 @@ class Cache(Base):
     activeSessions = Column(String, nullable=True)
     globalChatTask = Column(String, nullable=True)
     activeModel = Column(VARCHAR(1), nullable=True)
+    requireReply = Column(Boolean, nullable=False)
 
 class Persona(Base):
     __tablename__="personalities"
