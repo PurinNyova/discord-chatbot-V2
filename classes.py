@@ -18,11 +18,16 @@ class BaseManager:
     def createData(self, origin):
         raise NotImplementedError("Subclass must implement")
 
-    def change_data(self, other=None, delete=False):
+    def change_data(self, other=None, delete=False, modify=False):
         object = self.data if other is None else other
-        self.session.delete(object) if delete else self.session.add(object) #the other param allows for versatility of the change data method
+              # Modify the string (if needed)
+        if delete:
+            self.session.delete(object)
+        elif not modify:
+            self.session.add(object)
         self.session.commit()
         self.session.close()
+
 
     def endecoder(self, obj) -> Union[list, dict, str]:
         if isinstance(obj, list) or isinstance(obj, dict):
@@ -42,6 +47,7 @@ class CacheManager(BaseManager):
                 activeSessions="[]",
                 globalChatTask="{}",
                 activeModel = "1",
+                requireReply = False,
             )
         self.change_data(cache_record)
         self.data = self.session.query(Cache).filter_by(origin=origin).first()

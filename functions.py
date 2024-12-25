@@ -5,6 +5,8 @@ from classes import PersonalityManager
 from typing import Union
 import requests
 
+last_message = {}
+
 def load_model() -> dict:
     with open('models.json') as jsonFile:
         models = json.load(jsonFile)    
@@ -38,6 +40,7 @@ async def send_webhook(ctx: Union[discord.Message, discord.Interaction], full_re
     # Check for errors
     if response.status_code == 204:
         logger.info("Message sent successfully.")
+        last_message[f"{ctx.guild.id}{ctx.channel.id}"] = f"{name}"
     else:
         logger.info(f"Failed to send message. Status code: {response.status_code}, Response: {response.text}")
 
@@ -45,10 +48,11 @@ def split_message(content, limit=2000) -> list:
     """Split a message into chunks of a specified limit."""
     return [content[i:i+limit] for i in range(0, len(content), limit)]
 
-async def send_large_message(message: discord.Message, content):
+async def send_large_message(message: Union[discord.Message, discord.Interaction], content):
     """Send content which may be longer than the discord character limit by splitting it into parts."""
     for chunk in split_message(content):
-        await message.reply(chunk)
+        last_message.pop(f"{message.guild.id}{message.channel.id}", None)
+        await message.reply(chunk) if isinstance(message, discord.Message) else await message.channel.send(chunk)
 
 def getTxt(url: str) -> str:
     try:

@@ -1,6 +1,6 @@
 import discord
 from classes import PersonalityManager, CacheManager
-from functions import getTxt, load_model
+from functions import getTxt, load_model, last_message
 from init import logger, TOKEN, BOT_INVITE_URL, DISCORD_CLIENT_ID, MAX_CACHE
 from chatWithAI import chatWithAI, openaiDescribe
 from discord.ext import commands
@@ -15,6 +15,7 @@ intents.message_content = True  # This intent is required to read message conten
 intents.messages = True  # Required for message.reference
 intents.invites = True
 bot = commands.Bot(command_prefix="s!", intents=intents)  # Using the Client class
+
 
 @bot.event
 async def on_ready():
@@ -175,26 +176,73 @@ async def globalchat(interaction: discord.Interaction, option: discord.app_comma
     
     await interaction.response.send_message(f"Global chat {'enabled' if option.value else 'disabled'} in this channel{f' with {contextlength} messages context.' if option.value else ''}")
 
+async def persona_autocomplete(
+    interaction: discord.Interaction, current: str
+) -> list[discord.app_commands.Choice[str]]:
+
+    dataHandler = PersonalityManager(interaction.guild.id)
+    personas = dataHandler.returnPersonas()
+
+
+    return [
+        discord.app_commands.Choice(name=persona, value=persona)
+        for persona in personas
+        if current.lower() in persona.lower() 
+    ]
+
 @bot.tree.command(name="send", description="Trigger the bot to send a message")
 @discord.app_commands.describe(name="Persona Name")
-async def sendpersona(interaction: discord.Interaction, name: str):
-    webhooks = await interaction.channel.webhooks()
-    existing_webhook = None
-    for webhook in webhooks:
-        if webhook.name == "Kuromi webhook":
-            existing_webhook = webhook
-            break
+@discord.app_commands.autocomplete(name=persona_autocomplete)
+async def sendpersona(interaction: discord.Interaction, name: Optional[str]):
+    if name:
+        webhooks = await interaction.channel.webhooks()
+        existing_webhook = None
+        for webhook in webhooks:
+            if webhook.name == "Kuromi webhook":
+                existing_webhook = webhook
+                break
 
-    if existing_webhook is None:
-        await interaction.response.send_message("Persona disabled")
-    logger.info("Send persona command sent")
-    personaHandler = PersonalityManager(interaction.guild.id)
-    names = personaHandler.returnPersonas()
-    if name not in names:
-        await interaction.response.send_message("Persona doesn't exist")
+        if existing_webhook is None:
+            await interaction.response.send_message("Persona disabled")
+        logger.info("Send persona command sent")
+        personaHandler = PersonalityManager(interaction.guild.id)
+        names = personaHandler.returnPersonas()
+        if name not in names:
+            await interaction.response.send_message("Persona doesn't exist")
+        else:
+            await interaction.response.send_message("...")
+            await chatWithAI(interaction, name)
     else:
-        await interaction.response.send_message("...")
-        await chatWithAI(interaction, name)
+        await interaction.response.send_message(content="Sending", ephemeral=True)
+        await chatWithAI(interaction)
+
+@bot.tree.command(name="requirereply", description="Set if you want to require a reply for bot to send a message")
+@discord.app_commands.choices(option=[
+    discord.app_commands.Choice(name="Enabled", value=1),
+    discord.app_commands.Choice(name="Disabled", value=0)
+])
+@discord.app_commands.describe(option="Enable or Disable")
+async def req_reply(interaction: discord.Interaction, option: int):
+    logger.info("require reply command executed")
+    dataHandler = CacheManager(interaction.guild.id)
+    if option == 1:
+        if dataHandler.data.requireReply:
+            await interaction.response.send_message("Already enabled")
+            logger.info("require reply command returned code 400")
+        else:
+            dataHandler.data.requireReply = True
+            dataHandler.change_data()
+            logger.info("require reply command returned code 200")
+            await interaction.response.send_message("Require reply enabled")
+    else:
+        if not dataHandler.data.requireReply:
+            await interaction.response.send_message("Already disabled")
+            logger.info("require reply command returned code 401")
+        else:
+            dataHandler.data.requireReply = False
+            dataHandler.change_data()
+            logger.info("require reply command returned code 201")
+            await interaction.response.send_message("Require reply disabled")
 
 
 @bot.event
@@ -211,11 +259,11 @@ async def on_message(ctx:discord.Message):
 
     if ctx.author.id == ctx.guild.me.id or ctx.webhook_id is not None:
         return
-    if not webhookDetect and not kuromiPing and bot.user not in ctx.mentions:
-        return 
-    
     
     dataHandler = CacheManager(ctx.guild.id) #create object to handle db interaction
+    if not webhookDetect and not kuromiPing and bot.user not in ctx.mentions and dataHandler.data.requireReply:
+        return 
+    
     logger.info(dataHandler.globalChatTask)
     if ctx.channel.id not in dataHandler.globalChatTask:
         return
@@ -234,7 +282,14 @@ async def on_message(ctx:discord.Message):
     channelContextLength = int(dataHandler.globalChatTask[ctx.channel.id])
     logger.info(f"Continuing conversation with user: {ctx.author.display_name} (ID: {ctx.author.id}) at at {channelContextLength} context")
 
-    await chatWithAI(ctx, cache=int(channelContextLength)) if not webhookDetect else await chatWithAI(ctx, name=reference.author.display_name, cache=int(channelContextLength))
+    lastIsBot = f"{ctx.guild.id}{ctx.channel.id}" not in last_message
+    logger.info(lastIsBot)
+    if not webhookDetect and lastIsBot or bot.user in ctx.mentions:
+        await chatWithAI(ctx, cache=int(channelContextLength))
+    else :
+        await chatWithAI(ctx,
+                         name=(last_message[f"{ctx.guild.id}{ctx.channel.id}"] if not lastIsBot else reference.author.display_name),
+                         cache=int(channelContextLength))
 
 
 bot.run(TOKEN)

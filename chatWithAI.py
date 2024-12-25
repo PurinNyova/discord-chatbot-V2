@@ -10,6 +10,8 @@ import openai
 
 async def chatWithAI(ctx: Union[discord.Message, discord.Interaction], name: str=None, cache=int(MAX_CACHE)):
 
+    if name:
+        logger.info(f"Name: {name}")
     #Create Personality object and load it with the intended persona
     personaHandler = PersonalityManager(ctx.guild.id)
     personaHandler.getPersona(name)
@@ -74,6 +76,7 @@ async def chatWithAI(ctx: Union[discord.Message, discord.Interaction], name: str
         #logs the built JSON    
         logger.info(f"Attempt openai with {client.base_url} {openai_model}")
         logger.info(json.dumps(content, indent=4))
+        logger.info(dataHandler.data)
 
         try:
             stream = await client.chat.completions.create(
