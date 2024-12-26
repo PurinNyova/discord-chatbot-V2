@@ -118,8 +118,10 @@ async def persona(interaction: discord.Interaction, option: discord.app_commands
         await interaction.response.send_message(f"Modify done")
     else:
         personas = personaHandler.returnPersonas(personaObject=True)
-        if personas is None:
+        logger.info(f"Persona showall Command {personas}")
+        if personas == []:
             await interaction.response.send_message("This server does not have any custom persona")
+            return
         embeds = [(discord.Embed(title=personaObject.name, description=personaObject.personality)) for personaObject in personas]
         [embed.set_image(url=str(personas[i].profilePicture)) for i,embed in enumerate(embeds)]
         await interaction.response.send_message(embeds=embeds)
@@ -293,7 +295,7 @@ async def on_message(ctx:discord.Message):
         await chatWithAI(ctx, cache=int(channelContextLength))
     else :
         await chatWithAI(ctx,
-                         name=(last_message[f"{ctx.guild.id}{ctx.channel.id}"] if not lastIsBot else reference.author.display_name),
+                         name=(last_message[f"{ctx.guild.id}{ctx.channel.id}"] if not webhookDetect else reference.author.display_name),
                          cache=int(channelContextLength))
 
 

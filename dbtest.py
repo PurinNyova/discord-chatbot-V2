@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, String, JSON, ARRAY, Integer, VARCHAR
+from sqlalchemy import create_engine, Column, String, JSON, ARRAY, Integer, VARCHAR, Boolean
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -19,6 +19,7 @@ class Cache(Base):
     activeSessions = Column(String, nullable=True)
     globalChatTask = Column(String, nullable=True)
     activeModel = Column(VARCHAR(1), nullable=True)
+    requireReply = Column(Boolean, nullable=False)
 
 class Persona(Base):
     __tablename__="personalities"
@@ -48,6 +49,7 @@ def read_cache_data():
                 print(f"Active Sessions: {record.activeSessions}")
                 print(f"Global Chat Task: {record.globalChatTask}")
                 print(f"Active Model: {record.activeModel}")
+                print(f"requireReply: {record.requireReply}")
                 print("=" * 40)  # Separator for better readability
         else:
             print("No records found in the Cache table.")
