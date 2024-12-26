@@ -1,6 +1,6 @@
 import discord
 from classes import PersonalityManager, CacheManager
-from functions import getTxt, load_model, last_message
+from functions import getTxt, load_model, last_message, imageDescriptionCache
 from init import logger, TOKEN, BOT_INVITE_URL, DISCORD_CLIENT_ID, MAX_CACHE
 from chatWithAI import chatWithAI, openaiDescribe
 from discord.ext import commands
@@ -16,9 +16,7 @@ intents.messages = True  # Required for message.reference
 intents.invites = True
 bot = commands.Bot(command_prefix="s!", intents=intents)  # Using the Client class
 
-async def persona_autocomplete(
-    interaction: discord.Interaction, current: str
-) -> list[discord.app_commands.Choice[str]]:
+async def persona_autocomplete(interaction: discord.Interaction, current: str) -> list[discord.app_commands.Choice[str]]:
 
     dataHandler = PersonalityManager(interaction.guild.id)
     personas = dataHandler.returnPersonas()
@@ -246,21 +244,29 @@ async def req_reply(interaction: discord.Interaction, option: int):
 async def on_message(ctx:discord.Message):
 
     logger.info(f"Message detected from: {ctx.author.display_name}")
+
+    #Get the message context is replying to
     reference: discord.Message = await ctx.channel.fetch_message(ctx.reference.message_id) if ctx.reference is not None else None
+    #See if the replied message is a webhook
     webhookDetect = reference.webhook_id if reference and reference.webhook_id else None
+    #See if bot is replied to
     kuromiPing = reference.author if reference and reference.author is bot.user else None
     if webhookDetect:
         logger.info(f"webhook reference {webhookDetect}")
     if kuromiPing:
         logger.info(f"Main bot reference {kuromiPing}")
-
+        
+    #Don't respond if it's from self or a webhook
     if ctx.author.id == ctx.guild.me.id or ctx.webhook_id is not None:
         return
     
     dataHandler = CacheManager(ctx.guild.id) #create object to handle db interaction
+
+    #don't respond if it's not a webhook, bot not replied to, bot not mentioned, and requireReply is enabled
     if not webhookDetect and not kuromiPing and bot.user not in ctx.mentions and dataHandler.data.requireReply:
         return 
     
+    #check if channel has globalChat enabled
     logger.info(dataHandler.globalChatTask)
     if ctx.channel.id not in dataHandler.globalChatTask:
         return
@@ -272,6 +278,8 @@ async def on_message(ctx:discord.Message):
         if image_attachment:
             # Call the openaiDescribe function to get the image description
             image_description = await openaiDescribe(ctx, image_attachment.url)
+            imageDescriptionCache[ctx.channel.id][ctx.id] = image_description
+            
             
             # Prepend the image description in parentheses to the message content
             ctx.content = f"({image_description}) {ctx.content}"

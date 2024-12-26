@@ -4,8 +4,10 @@ import json
 from classes import PersonalityManager
 from typing import Union
 import requests
+from collections import defaultdict
 
 last_message = {}
+imageDescriptionCache = defaultdict(lambda: defaultdict(str))
 
 def load_model() -> dict:
     with open('models.json') as jsonFile:
@@ -27,22 +29,24 @@ async def send_webhook(ctx: Union[discord.Message, discord.Interaction], full_re
     custom_username = personaHandler.data.name
     custom_avatar_url = personaHandler.data.profilePicture
 
-    # Construct the payload for the webhook
-    payload = {
-        "content": full_res,
-        "username": custom_username,
-        "avatar_url": custom_avatar_url
-    }
 
-    # Send the POST request using the requests library
-    response = requests.post(webhook_url, json=payload)
+    for chunk in split_message(full_res):
+        # Construct the payload for the webhook
+        payload = {
+            "content": chunk,
+            "username": custom_username,
+            "avatar_url": custom_avatar_url
+        }
 
-    # Check for errors
-    if response.status_code == 204:
-        logger.info("Message sent successfully.")
-        last_message[f"{ctx.guild.id}{ctx.channel.id}"] = f"{name}"
-    else:
-        logger.info(f"Failed to send message. Status code: {response.status_code}, Response: {response.text}")
+        # Send the POST request using the requests library
+        response = requests.post(webhook_url, json=payload)
+
+        # Check for errors
+        if response.status_code == 204:
+            logger.info("Message sent successfully.")
+            last_message[f"{ctx.guild.id}{ctx.channel.id}"] = f"{name}"
+        else:
+            logger.info(f"Failed to send message. Status code: {response.status_code}, Response: {response.text}")
 
 def split_message(content, limit=2000) -> list:
     """Split a message into chunks of a specified limit."""
@@ -50,8 +54,8 @@ def split_message(content, limit=2000) -> list:
 
 async def send_large_message(message: Union[discord.Message, discord.Interaction], content):
     """Send content which may be longer than the discord character limit by splitting it into parts."""
+    last_message.pop(f"{message.guild.id}{message.channel.id}", None)
     for chunk in split_message(content):
-        last_message.pop(f"{message.guild.id}{message.channel.id}", None)
         await message.reply(chunk) if isinstance(message, discord.Message) else await message.channel.send(chunk)
 
 def getTxt(url: str) -> str:
