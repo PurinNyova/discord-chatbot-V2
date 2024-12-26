@@ -3,7 +3,7 @@ from init import logger, MAX_CACHE
 import json
 from classes import PersonalityManager, CacheManager
 from collections import deque
-from functions import send_webhook, send_large_message, load_model
+from functions import send_webhook, send_large_message, load_model, imageDescriptionCache
 from typing import Union
 import openai
 
@@ -58,13 +58,16 @@ async def chatWithAI(ctx: Union[discord.Message, discord.Interaction], name: str
                 logger.info(f"mainbot detect")
                 user_message_cache.appendleft(("assistant", messagex.content))
         else:
-            user_message_cache.appendleft(("user", f"({messagex.author.display_name}): {messagex.content}"))
+            if ctx.channel.id in imageDescriptionCache and messagex.id in imageDescriptionCache[ctx.channel.id]:
+                user_message_cache.appendleft(("user", f"({messagex.author.display_name}): {imageDescriptionCache[ctx.channel.id][messagex.id]} {messagex.content}"))
+            else:
+                user_message_cache.appendleft(("user", f"({messagex.author.display_name}): {messagex.content}"))
     logger.info(f"Cached the last {MAX_CACHE} messages from the channel.")
 
     async with ctx.channel.typing():
         #build JSON response
         content = [
-            {"role": "system", "content": "There are multiple users. Do not mistake one another. Do not speak on behalf of users. Keep it realistic and conversational"},
+            {"role": "system", "content": "There are multiple users. Do not mistake one another. Do not speak on behalf of users. Keep it realistic and conversational. Keep your responses short don't make long paragraphs"},
             {"role": "system", "content":sys_msg}
         ]
         if isinstance(ctx, discord.Message) and ctx.attachments:
