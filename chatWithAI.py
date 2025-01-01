@@ -103,16 +103,16 @@ async def chatWithAI(ctx: Union[discord.Message, discord.Interaction], name: str
             await send_large_message(ctx, full_res) if name is None else await send_webhook(ctx, full_res, name)
 
         except openai.AuthenticationError as e:
-            await ctx.channel.send(f"Authentication error occurred: {str(e)}")
+            await send_large_message(ctx, f"Authentication error occurred: {str(e)}")
         except openai.RateLimitError as e:
-            await ctx.channel.send(f"Rate limiter error occurred: {str(e)}")
+            await send_large_message(ctx, f"Rate limiter error occurred: {str(e)}")
         except openai.APIConnectionError as e:
-            await ctx.channel.send(f"OpenAI Connection Error occurred: {str(e)}")
+            await send_large_message(ctx, f"OpenAI Connection Error occurred: {str(e)}")
         except openai.BadRequestError as e:
-            await ctx.channel.send(f"Bad Request error occurred: {str(e)}")
+            await send_large_message(ctx, f"Bad Request error occurred: {str(e)}")
         except Exception as e:
         # Optional: Catch any other exceptions
-            print(f"An unexpected error occurred: {e}")
+            send_large_message(ctx, f"An unexpected error occurred: {e}")
 
 async def openaiDescribe(ctx: discord.Message, image_url: str) -> str:
     models = load_model()
