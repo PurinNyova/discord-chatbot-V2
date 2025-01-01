@@ -26,7 +26,6 @@ class BaseManager:
         elif not modify:
             self.session.add(object)
         self.session.commit()
-        self.session.close()
 
 
     def endecoder(self, obj) -> Union[list, dict, str]:
