@@ -76,6 +76,9 @@ async def chatWithAI(ctx: Union[discord.Message, discord.Interaction], name: str
 
         for role, msg_content in user_message_cache:
             content.append({"role": role, "content": msg_content})
+        
+        if content[-1]["role"] == "assistant":
+            content.append({"role": "user", "content": "."})
 
         #logs the built JSON    
         logger.info(f"Attempt openai with {client.base_url} {openai_model}")
