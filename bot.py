@@ -75,14 +75,15 @@ async def modelpick(interaction: discord.Interaction, option: discord.app_comman
     discord.app_commands.Choice(name="Add", value=0),
     discord.app_commands.Choice(name="Remove", value=1),
     discord.app_commands.Choice(name="Modify", value=2),
-    discord.app_commands.Choice(name="Show All", value=3)
+    discord.app_commands.Choice(name="Show", value=3),
+    discord.app_commands.Choice(name="Show All", value=4)
 ])
 @discord.app_commands.autocomplete(name=persona_autocomplete)
 @discord.app_commands.describe(option="Operation", name="Name of persona", profilepicture="Imgur link of Persona (please add .png/.jpg)", personality="Pastebin link for personality", new_name="For modifying persona name, optional")
 async def persona(interaction: discord.Interaction, option: discord.app_commands.Choice[int], name: Optional[str], profilepicture: Optional[str], personality: Optional[str], new_name: Optional[str]):
     personaHandler = PersonalityManager(interaction.guild.id)
     names = personaHandler.returnPersonas()
-    if option.value != 3 and name is None:
+    if option.value != 4 and name is None:
         await interaction.response.send_message("Please input the name")
     if option.value == 0: #Add Persona
         if name in names: #Check if it already exists
@@ -112,17 +113,25 @@ async def persona(interaction: discord.Interaction, option: discord.app_commands
             personality = getTxt(personality) if personality else personaHandler.data.personality,
             profile = profilepicture if profilepicture else personaHandler.data.profilePicture
         )
-        personaHandler.change_data()
+        personaHandler.change_data(modify=True)
         read_cache_data()
         logger.info("Data Modification Warning")
         await interaction.response.send_message(f"Modify done")
+    elif option.value == 3: #Show Character
+        persona = personaHandler.getPersona(name)
+        logger.info(f"Persona show Command {personaHandler.data.name}")
+        embed = discord.Embed(
+            title=personaHandler.data.name,
+            description=personaHandler.data.personality
+            ).set_image(url=str(personaHandler.data.profilePicture))
+        await interaction.response.send_message(embed=embed)
     else:
         personas = personaHandler.returnPersonas(personaObject=True)
         logger.info(f"Persona showall Command {personas}")
         if personas == []:
             await interaction.response.send_message("This server does not have any custom persona")
             return
-        embeds = [(discord.Embed(title=personaObject.name, description=personaObject.personality)) for personaObject in personas]
+        embeds = [(discord.Embed(title=personaObject.name, description=None)) for personaObject in personas]
         [embed.set_image(url=str(personas[i].profilePicture)) for i,embed in enumerate(embeds)]
         await interaction.response.send_message(embeds=embeds)
     
