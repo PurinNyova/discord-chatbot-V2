@@ -1,5 +1,5 @@
 import discord
-from init import logger, MAX_CACHE
+from init import logger, MAX_CACHE, VISION
 import json
 from classes import PersonalityManager, CacheManager
 from collections import deque
@@ -67,7 +67,7 @@ async def chatWithAI(ctx: Union[discord.Message, discord.Interaction], name: str
     async with ctx.channel.typing():
         #build JSON response
         content = [
-            {"role": "system", "content": "There are multiple users. Do not mistake one another. Do not speak on behalf of users. Keep it realistic and conversational. Keep your responses short don't make long paragraphs"},
+            {"role": "system", "content": "There are multiple users. Do not mistake one another. ONLY speak using characters in system prompts. Keep it realistic and conversational. Keep your responses short don't make long paragraphs"},
             {"role": "system", "content": "If you don't see yourself in message history simply jump in the conversation naturally"},
             {"role": "system", "content":sys_msg}
         ]
@@ -119,7 +119,7 @@ async def chatWithAI(ctx: Union[discord.Message, discord.Interaction], name: str
 
 async def openaiDescribe(ctx: discord.Message, image_url: str) -> str:
     models = load_model()
-    openai_model = models["2"]["model_name"]
+    openai_model = models[str(VISION)]["model_name"]
     client = openai.AsyncOpenAI(api_key=models["2"]["api_key"],base_url=models["2"]["url"])
 
     async with ctx.channel.typing():
