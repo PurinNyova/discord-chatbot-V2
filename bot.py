@@ -50,11 +50,11 @@ async def modelpick(interaction: discord.Interaction, option: discord.app_comman
             if response.status_code == 200:
                 dataHandler.data.activeModel = option.value
                 dataHandler.change_data()
-                await interaction.response.send_message(f"Model {option.value} selected and the {models["0"]["url"]} is online.")
+                await interaction.response.send_message(f"Model {option.value} selected and the {models["0"]["url"]} is online.", ephemeral=True)
             else:
-                await interaction.response.send_message(f"The endpoint returned status code: {response.status_code}. Endpoint may be offline.")
+                await interaction.response.send_message(f"The endpoint returned status code: {response.status_code}. Endpoint may be offline.", ephemeral=True)
         except requests.exceptions.RequestException as e:
-            await interaction.response.send_message(f"The endpoint {models["0"]["url"]} is offline or there was an error: {e}")
+            await interaction.response.send_message(f"The endpoint {models["0"]["url"]} is offline or there was an error: {e}", ephemeral=True)
     else:
         logger.info(f"{models[option.value]["url"]} selected, attempting connection.")
         try:
@@ -64,11 +64,11 @@ async def modelpick(interaction: discord.Interaction, option: discord.app_comman
             if response.status_code == 200:
                 dataHandler.data.activeModel = option.value
                 dataHandler.change_data()
-                await interaction.response.send_message(f"Model {option.value} selected and the {models[option.value]["url"]} is online.")
+                await interaction.response.send_message(f"Model {option.value} selected and the {models[option.value]["url"]} is online.", ephemeral=True)
             else:
-                await interaction.response.send_message(f"The endpoint returned status code: {response.status_code}. Endpoint may be offline.")
+                await interaction.response.send_message(f"The endpoint returned status code: {response.status_code}. Endpoint may be offline.", ephemeral=True)
         except requests.exceptions.RequestException as e:
-            await interaction.response.send_message(f"The endpoint {models[option.value]["url"]} is offline or there was an error: {e}")
+            await interaction.response.send_message(f"The endpoint {models[option.value]["url"]} is offline or there was an error: {e}", ephemeral=True)
 
 @bot.tree.command(name="persona", description="add a persona")
 @discord.app_commands.choices(option=[
@@ -84,10 +84,10 @@ async def persona(interaction: discord.Interaction, option: discord.app_commands
     personaHandler = PersonalityManager(interaction.guild.id)
     names = personaHandler.returnPersonas()
     if option.value != 4 and name is None:
-        await interaction.response.send_message("Please input the name")
+        await interaction.response.send_message("Please input the name", ephemeral=True)
     if option.value == 0: #Add Persona
         if name in names: #Check if it already exists
-            await interaction.response.send_message("Name already exist")
+            await interaction.response.send_message("Name already exist", ephemeral=True)
         else:
             personaHandler.addPersonality(
                 name=name,
@@ -95,18 +95,18 @@ async def persona(interaction: discord.Interaction, option: discord.app_commands
                 profile=profilepicture
             )
             if name not in personaHandler.returnPersonas(): #Checks if it is added
-                await interaction.response.send_message("Add fail")
+                await interaction.response.send_message("Add fail", ephemeral=True)
             else:
-                await interaction.response.send_message(f"Add success, personality {name} with profile picture [link]({profilepicture})")
+                await interaction.response.send_message(f"Add success, personality {name} with profile picture [link]({profilepicture})", ephemeral=True)
     elif option.value == 1: #Delete
         if name not in names:
-            await interaction.response.send_message("Persona doesn't exist")
+            await interaction.response.send_message("Persona doesn't exist", ephemeral=True)
         personaHandler.getPersona(name)
         personaHandler.change_data(delete=True)
-        await interaction.response.send_message(f"Remove success")
+        await interaction.response.send_message(f"Remove success", ephemeral=True)
     elif option.value == 2: #Modify
         if name not in names:
-            await interaction.response.send_message("Persona doesn't exist")
+            await interaction.response.send_message("Persona doesn't exist", ephemeral=True)
         personaHandler.getPersona(name)
         personaHandler.modifyPersonality(
             name = new_name if new_name else name,
@@ -116,7 +116,7 @@ async def persona(interaction: discord.Interaction, option: discord.app_commands
         personaHandler.change_data(modify=True)
         read_cache_data()
         logger.info("Data Modification Warning")
-        await interaction.response.send_message(f"Modify done")
+        await interaction.response.send_message(f"Modify done", ephemeral=True)
     elif option.value == 3: #Show Character
         persona = personaHandler.getPersona(name)
         logger.info(f"Persona show Command {personaHandler.data.name}")
@@ -129,7 +129,7 @@ async def persona(interaction: discord.Interaction, option: discord.app_commands
         personas = personaHandler.returnPersonas(personaObject=True)
         logger.info(f"Persona showall Command {personas}")
         if personas == []:
-            await interaction.response.send_message("This server does not have any custom persona")
+            await interaction.response.send_message("This server does not have any custom persona", ephemeral=True)
             return
         embeds = [(discord.Embed(title=personaObject.name, description=None)) for personaObject in personas]
         [embed.set_image(url=str(personas[i].profilePicture)) for i,embed in enumerate(embeds)]
@@ -154,18 +154,18 @@ async def personasystem(ctx: discord.Interaction, option: discord.app_commands.C
         if existing_webhook is None:
             webhook = await ctx.channel.create_webhook(name="Kuromi webhook")
             logger.info(f'Webhook created! URL: {webhook.url}')
-            await ctx.response.send_message("Persona enabled here")
+            await ctx.response.send_message("Persona enabled here", ephemeral=True)
         else:
-            await ctx.response.send_message("Persona already enabled here")
+            await ctx.response.send_message("Persona already enabled here", ephemeral=True)
     else:
         # Remove the webhook if it exists
         if existing_webhook is None:
-            await ctx.response.send_message("Persona already disabled")
+            await ctx.response.send_message("Persona already disabled", ephemeral=True)
         else:
             await existing_webhook.delete()
             # Optionally, remove it from your stored data
             logger.info(f'Webhook removed! URL: {existing_webhook.url}')
-            await ctx.response.send_message("Persona disabled")
+            await ctx.response.send_message("Persona disabled", ephemeral=True)
 
 @bot.tree.command(name="globalchat", description="Enable respondAll behavior in this channel")
 @discord.app_commands.choices(option=[
@@ -178,7 +178,7 @@ async def globalchat(interaction: discord.Interaction, option: discord.app_comma
     if bool(option.value):
         logger.info(f"Global chat enabling in {interaction.channel.id}: {contextlength} messages")
         if contextlength > int(MAX_CACHE):
-            await interaction.response.send_message(f"Exceeded max cache of {MAX_CACHE}")
+            await interaction.response.send_message(f"Exceeded max cache of {MAX_CACHE}", ephemeral=True)
         elif interaction.channel.id not in dataHandler.globalChatTask:
             dataHandler.globalChatTask[interaction.channel.id] = contextlength #appends channel id to dict with contextlength
             dataHandler.updateGlobalChatTask() #convert back to strlist. <- obsolete, str endecoder embedded in manager class now.
@@ -194,7 +194,7 @@ async def globalchat(interaction: discord.Interaction, option: discord.app_comma
         else:
             logger.info("Global chat already disabled")
     
-    await interaction.response.send_message(f"Global chat {'enabled' if option.value else 'disabled'} in this channel{f' with {contextlength} messages context.' if option.value else ''}")
+    await interaction.response.send_message(f"Global chat {'enabled' if option.value else 'disabled'} in this channel{f' with {contextlength} messages context.' if option.value else ''}", ephemeral=True)
 
 @bot.tree.command(name="send", description="Trigger the bot to send a message")
 @discord.app_commands.describe(name="Persona Name")
@@ -209,12 +209,12 @@ async def sendpersona(interaction: discord.Interaction, name: Optional[str]):
                 break
 
         if existing_webhook is None:
-            await interaction.response.send_message("Persona disabled")
+            await interaction.response.send_message("Persona disabled", ephemeral=True)
         logger.info("Send persona command sent")
         personaHandler = PersonalityManager(interaction.guild.id)
         names = personaHandler.returnPersonas()
         if name not in names:
-            await interaction.response.send_message("Persona doesn't exist")
+            await interaction.response.send_message("Persona doesn't exist", ephemeral=True)
         else:
             await interaction.response.send_message(content="Sending", ephemeral=True)
             await chatWithAI(interaction, name)
@@ -233,22 +233,22 @@ async def req_reply(interaction: discord.Interaction, option: int):
     dataHandler = CacheManager(interaction.guild.id)
     if option == 1:
         if dataHandler.data.requireReply:
-            await interaction.response.send_message("Already enabled")
+            await interaction.response.send_message("Already enabled", ephemeral=True)
             logger.info("require reply command returned code 400")
         else:
             dataHandler.data.requireReply = True
             dataHandler.change_data()
             logger.info("require reply command returned code 200")
-            await interaction.response.send_message("Require reply enabled")
+            await interaction.response.send_message("Require reply enabled", ephemeral=True)
     else:
         if not dataHandler.data.requireReply:
-            await interaction.response.send_message("Already disabled")
+            await interaction.response.send_message("Already disabled", ephemeral=True)
             logger.info("require reply command returned code 401")
         else:
             dataHandler.data.requireReply = False
             dataHandler.change_data()
             logger.info("require reply command returned code 201")
-            await interaction.response.send_message("Require reply disabled")
+            await interaction.response.send_message("Require reply disabled", ephemeral=True)
 
 
 @bot.event

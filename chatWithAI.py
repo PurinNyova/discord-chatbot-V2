@@ -67,8 +67,7 @@ async def chatWithAI(ctx: Union[discord.Message, discord.Interaction], name: str
     async with ctx.channel.typing():
         #build JSON response
         content = [
-            {"role": "system", "content": "There are multiple users. Do not mistake one another. ONLY speak using characters in system prompts. Keep it realistic and conversational. Keep your responses short don't make long paragraphs"},
-            {"role": "system", "content": "If you don't see yourself in message history simply jump in the conversation naturally"},
+            {"role": "system", "content": "There are multiple users. Do not mistake one another. Only speak your character. Keep it realistic and conversational. Keep your responses short don't make long paragraphs"},
             {"role": "system", "content":sys_msg}
         ]
         if isinstance(ctx, discord.Message) and ctx.attachments:
