@@ -83,7 +83,7 @@ async def modelpick(interaction: discord.Interaction, option: discord.app_comman
 async def persona(interaction: discord.Interaction, option: discord.app_commands.Choice[int], name: Optional[str], profilepicture: Optional[str], personality: Optional[str], new_name: Optional[str]):
     personaHandler = PersonalityManager(interaction.guild.id)
     names = personaHandler.returnPersonas()
-    if option.value != 4 and name is None:
+    if option.value != 4 and name is None or "":
         await interaction.response.send_message("Please input the name", ephemeral=True)
     if option.value == 0: #Add Persona
         if name in names: #Check if it already exists
