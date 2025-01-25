@@ -85,6 +85,7 @@ async def persona(interaction: discord.Interaction, option: discord.app_commands
     names = personaHandler.returnPersonas()
     if option.value != 4 and name is None or "":
         await interaction.response.send_message("Please input the name", ephemeral=True)
+        return
     if option.value == 0: #Add Persona
         if name in names: #Check if it already exists
             await interaction.response.send_message("Name already exist", ephemeral=True)
