@@ -50,7 +50,7 @@ async def modelpick(interaction: discord.Interaction, option: discord.app_comman
             if response.status_code == 200:
                 dataHandler.data.activeModel = option.value
                 dataHandler.change_data()
-                await interaction.response.send_message(f"Model {option.value} selected and the {models["0"]["url"]} is online.", ephemeral=True)
+                await interaction.response.send_message(f"Model {option.value} selected and the {models["0"]["url"]} is online.")
             else:
                 await interaction.response.send_message(f"The endpoint returned status code: {response.status_code}. Endpoint may be offline.", ephemeral=True)
         except requests.exceptions.RequestException as e:
@@ -98,7 +98,7 @@ async def persona(interaction: discord.Interaction, option: discord.app_commands
             if name not in personaHandler.returnPersonas(): #Checks if it is added
                 await interaction.response.send_message("Add fail", ephemeral=True)
             else:
-                await interaction.response.send_message(f"Add success, personality {name} with profile picture [link]({profilepicture})", ephemeral=True)
+                await interaction.response.send_message(f"Add success, personality {name} with profile picture [link]({profilepicture})")
     elif option.value == 1: #Delete
         if name not in names:
             await interaction.response.send_message("Persona doesn't exist", ephemeral=True)
