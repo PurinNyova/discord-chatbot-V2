@@ -1,4 +1,5 @@
 import discord
+from imageGeneration import generateImage
 from classes import PersonalityManager, CacheManager
 from functions import getTxt, load_model, last_message, imageDescriptionCache
 from init import logger, TOKEN, BOT_INVITE_URL, DISCORD_CLIENT_ID, MAX_CACHE
@@ -196,6 +197,16 @@ async def globalchat(interaction: discord.Interaction, option: discord.app_comma
             logger.info("Global chat already disabled")
     
     await interaction.response.send_message(f"Global chat {'enabled' if option.value else 'disabled'} in this channel{f' with {contextlength} messages context.' if option.value else ''}", ephemeral=True)
+
+@bot.tree.command(name="generate", description="Generate an image")
+@discord.app_commands.describe(prompt="prompt")
+async def generateimage(interaction: discord.Interaction, prompt: str):
+    if not prompt:
+        await interaction.response.send_message("Please input prompt", ephemeral=True)
+    else:
+        fileObj = await generateImage(prompt)
+        await interaction.response.send_message(content=f"here is your image \"{prompt}\"", file=fileObj)
+
 
 @bot.tree.command(name="send", description="Trigger the bot to send a message")
 @discord.app_commands.describe(name="Persona Name")
