@@ -12,7 +12,8 @@ async def generateImage(prompt: str) -> discord.File:
         prompt=prompt,
         model="black-forest-labs/FLUX.1-schnell",
         steps=10,
-        n=1
+        n=1,
+        disable_safety_checker=True,
     )
     print("image sec")
     res = requests.get(response.data[0].url)

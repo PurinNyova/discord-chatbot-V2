@@ -204,7 +204,11 @@ async def generateimage(interaction: discord.Interaction, prompt: str):
     if not prompt:
         await interaction.response.send_message("Please input prompt", ephemeral=True)
     else:
-        fileObj = await generateImage(prompt)
+        try:
+            fileObj = await generateImage(prompt)
+        except:
+            await interaction.response.send_message(content=f"Error, image might be NSFW")
+            return
         await interaction.response.send_message(content=f"here is your image \"{prompt}\"", file=fileObj)
 
 
