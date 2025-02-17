@@ -6,7 +6,6 @@ from init import logger, TOKEN, BOT_INVITE_URL, DISCORD_CLIENT_ID, MAX_CACHE
 from chatWithAI import chatWithAI, openaiDescribe
 from discord.ext import commands
 from typing import Optional
-from dbtest import read_cache_data
 import requests
 
 
@@ -116,7 +115,6 @@ async def persona(interaction: discord.Interaction, option: discord.app_commands
             profile = profilepicture if profilepicture else personaHandler.data.profilePicture
         )
         personaHandler.change_data(modify=True)
-        read_cache_data()
         logger.info("Data Modification Warning")
         await interaction.response.send_message(f"Modify done", ephemeral=True)
     elif option.value == 3: #Show Character
@@ -284,7 +282,7 @@ async def on_message(ctx:discord.Message):
         logger.info(f"Main bot reference {kuromiPing}")
         
     #Don't respond if it's from self or a webhook
-    if ctx.author.id == ctx.guild.me.id or ctx.webhook_id is not None:
+    if ctx.author.id == bot.user.id or ctx.webhook_id is not None:
         return
     
     dataHandler = CacheManager(ctx.guild.id) #create object to handle db interaction
