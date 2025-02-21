@@ -8,7 +8,7 @@ from init import IMGGEN
 
 async def generateImage(prompt: str) -> discord.File:
 
-    client = Together(api_key="c1d2906e5b7e4cf216f64952a44088d561c8150f1d9b7b2d7e64a7a177edd37b")
+    client = Together(api_key=IMGGEN)
     try:
         response = client.images.generate(
             prompt=prompt,

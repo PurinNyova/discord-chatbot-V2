@@ -197,17 +197,19 @@ async def globalchat(interaction: discord.Interaction, option: discord.app_comma
     await interaction.response.send_message(f"Global chat {'enabled' if option.value else 'disabled'} in this channel{f' with {contextlength} messages context.' if option.value else ''}", ephemeral=True)
 
 @bot.tree.command(name="generate", description="Generate an image")
-@discord.app_commands.describe(prompt="prompt")
+@discord.app_commands.describe(prompt="The text prompt to generate the image from")
 async def generateimage(interaction: discord.Interaction, prompt: str):
-    if not prompt:
-        await interaction.response.send_message("Please input prompt", ephemeral=True)
-    else:
-        try:
-            fileObj = await generateImage(prompt)
-        except:
-            await interaction.response.send_message(content=f"Error, image might be NSFW")
-            return
-        await interaction.response.send_message(content=f"here is your image \"{prompt}\"", file=fileObj)
+    if not prompt.strip():
+        await interaction.response.send_message("Please input a non-empty prompt", ephemeral=True)
+        return
+
+    await interaction.response.defer()
+    try:
+        image_file = await generateImage(prompt)
+        await interaction.followup.send(content=f"Here is your image: {prompt}", file=image_file)
+    except Exception as e:
+        print(f"Error generating image: {e}")  # Log the error
+        await interaction.followup.send(content="An error occurred while generating the image.")
 
 
 @bot.tree.command(name="send", description="Trigger the bot to send a message")
