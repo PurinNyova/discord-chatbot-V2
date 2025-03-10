@@ -25,6 +25,7 @@ class BaseManager:
             self.session.delete(object)
         elif not modify:
             self.session.add(object)
+        print(f"Change data invoke: {"delete" if delete else "modify" if modify else "add"}")
         self.session.commit()
 
 
@@ -73,13 +74,9 @@ class PersonalityManager(BaseManager):
         self.data = self.session.query(Persona).filter_by(origin=self.origin, name=name).first()
     
     def modifyPersonality(self, name: str, profile: str, personality: str):
-        personality_record = Persona(
-            origin=self.origin,
-            name=name,
-            profilePicture=profile,
-            personality=personality
-        )
-        self.data = personality_record
+        self.data.name = name
+        self.data.profilePicture = profile
+        self.data.personality = personality
         self.change_data(modify=True)
     
     def returnPersonas(self, personaObject=False) -> Union[list[Persona], list]: #Returns a list of all persona in a server
