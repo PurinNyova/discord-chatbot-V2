@@ -114,8 +114,7 @@ async def persona(interaction: discord.Interaction, option: discord.app_commands
             personality = getTxt(personality) if personality else personaHandler.data.personality,
             profile = profilepicture if profilepicture else personaHandler.data.profilePicture
         )
-        personaHandler.change_data(modify=True)
-        logger.info("Data Modification Warning")
+        logger.info(f"Data Modification Warning {new_name} {personality} {profilepicture}")
         await interaction.response.send_message(f"Modify done", ephemeral=True)
     elif option.value == 3: #Show Character
         persona = personaHandler.getPersona(name)
