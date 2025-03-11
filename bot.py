@@ -18,7 +18,7 @@ bot = commands.Bot(command_prefix="s!", intents=intents)  # Using the Client cla
 
 async def persona_autocomplete(interaction: discord.Interaction, current: str) -> list[discord.app_commands.Choice[str]]:
 
-    dataHandler = PersonalityManager(interaction.guild.id)
+    dataHandler = PersonalityManager(interaction.guild.id if interaction.guild else interaction.channel.id)
     personas = dataHandler.returnPersonas()
 
 
@@ -41,7 +41,7 @@ async def on_ready():
     value=str(i)) for i, modelsx in enumerate(load_model().values())])
 @discord.app_commands.describe(option="Available Models")
 async def modelpick(interaction: discord.Interaction, option: discord.app_commands.Choice[str]):
-    dataHandler = CacheManager(interaction.guild.id)
+    dataHandler = CacheManager(interaction.guild.id if interaction.guild else interaction.channel.id)
     models = load_model()
     if option.value == 0:
         logger.info(f"{models["0"]["url"]} selected, attempting connection.")
@@ -81,7 +81,7 @@ async def modelpick(interaction: discord.Interaction, option: discord.app_comman
 @discord.app_commands.autocomplete(name=persona_autocomplete)
 @discord.app_commands.describe(option="Operation", name="Name of persona", profilepicture="Imgur link of Persona (please add .png/.jpg)", personality="Pastebin link for personality", new_name="For modifying persona name, optional")
 async def persona(interaction: discord.Interaction, option: discord.app_commands.Choice[int], name: Optional[str], profilepicture: Optional[str], personality: Optional[str], new_name: Optional[str]):
-    personaHandler = PersonalityManager(interaction.guild.id)
+    personaHandler = PersonalityManager(interaction.guild.id if interaction.guild else interaction.channel.id)
     names = personaHandler.returnPersonas()
     if option.value != 4 and name is None or "":
         await interaction.response.send_message("Please input the name", ephemeral=True)
@@ -173,7 +173,7 @@ async def personasystem(ctx: discord.Interaction, option: discord.app_commands.C
 ])
 @discord.app_commands.describe(option="Enable or Disable", contextlength="Length of memory in messages")
 async def globalchat(interaction: discord.Interaction, option: discord.app_commands.Choice[int], contextlength:int = 12):
-    dataHandler = CacheManager(interaction.guild.id)
+    dataHandler = CacheManager(interaction.guild.id if interaction.guild else interaction.channel.id)
     if bool(option.value):
         logger.info(f"Global chat enabling in {interaction.channel.id}: {contextlength} messages")
         if contextlength > int(MAX_CACHE):
@@ -226,7 +226,7 @@ async def sendpersona(interaction: discord.Interaction, name: Optional[str]):
         if existing_webhook is None:
             await interaction.response.send_message("Persona disabled", ephemeral=True)
         logger.info("Send persona command sent")
-        personaHandler = PersonalityManager(interaction.guild.id)
+        personaHandler = PersonalityManager(interaction.guild.id if interaction.guild else interaction.channel.id)
         names = personaHandler.returnPersonas()
         if name not in names:
             await interaction.response.send_message("Persona doesn't exist", ephemeral=True)
@@ -245,7 +245,7 @@ async def sendpersona(interaction: discord.Interaction, name: Optional[str]):
 @discord.app_commands.describe(option="Enable or Disable")
 async def req_reply(interaction: discord.Interaction, option: int):
     logger.info("require reply command executed")
-    dataHandler = CacheManager(interaction.guild.id)
+    dataHandler = CacheManager(interaction.guild.id if interaction.guild else interaction.channel.id)
     if option == 1:
         if dataHandler.data.requireReply:
             await interaction.response.send_message("Already enabled", ephemeral=True)
@@ -286,7 +286,7 @@ async def on_message(ctx:discord.Message):
     if ctx.author.id == bot.user.id or ctx.webhook_id is not None:
         return
     
-    dataHandler = CacheManager(ctx.guild.id) #create object to handle db interaction
+    dataHandler = CacheManager(ctx.guild.id if ctx.guild else ctx.channel.id) #create object to handle db interaction
 
     #don't respond if it's not a webhook, bot not replied to, bot not mentioned, and requireReply is enabled
     if not webhookDetect and not kuromiPing and bot.user not in ctx.mentions and dataHandler.data.requireReply:
@@ -313,13 +313,13 @@ async def on_message(ctx:discord.Message):
     channelContextLength = int(dataHandler.globalChatTask[ctx.channel.id])
     logger.info(f"Continuing conversation with user: {ctx.author.display_name} (ID: {ctx.author.id}) at at {channelContextLength} context")
 
-    lastIsBot = f"{ctx.guild.id}{ctx.channel.id}" not in last_message
+    lastIsBot = f"{ctx.guild.id if ctx.guild else ctx.channel.id}{ctx.channel.id}" not in last_message
     logger.info(lastIsBot)
     if not webhookDetect and lastIsBot or bot.user in ctx.mentions:
         await chatWithAI(ctx, cache=int(channelContextLength))
     else :
         await chatWithAI(ctx,
-                         name=(last_message[f"{ctx.guild.id}{ctx.channel.id}"] if not webhookDetect else reference.author.display_name),
+                         name=(last_message[f"{ctx.guild.id if ctx.guild else ctx.channel.id}{ctx.channel.id}"] if not webhookDetect else reference.author.display_name),
                          cache=int(channelContextLength))
 
 

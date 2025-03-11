@@ -54,7 +54,7 @@ def split_message(content, limit=2000) -> list:
 
 async def send_large_message(message: Union[discord.Message, discord.Interaction], content):
     """Send content which may be longer than the discord character limit by splitting it into parts."""
-    last_message.pop(f"{message.guild.id}{message.channel.id}", None)
+    last_message.pop(f"{message.guild.id if message.guild else message.channel.id}{message.channel.id}", None)
     for chunk in split_message(content):
         await message.reply(chunk) if isinstance(message, discord.Message) else await message.channel.send(chunk)
 
