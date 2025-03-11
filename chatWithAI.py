@@ -13,7 +13,7 @@ async def chatWithAI(ctx: Union[discord.Message, discord.Interaction], name: str
     if name:
         logger.info(f"Name: {name}")
     #Create Personality object and load it with the intended persona
-    personaHandler = PersonalityManager(ctx.guild.id)
+    personaHandler = PersonalityManager(ctx.guild.id if ctx.guild else ctx.channel.id)
     personaHandler.getPersona(name)
     if name is None:
         with open('personality.txt', 'r', encoding='utf-8') as file:
@@ -22,14 +22,17 @@ async def chatWithAI(ctx: Union[discord.Message, discord.Interaction], name: str
         sys_msg = personaHandler.data.personality
 
     #loads model info from database and set up OpenAI
-    dataHandler = CacheManager(ctx.guild.id)
+    dataHandler = CacheManager(ctx.guild.id if ctx.guild else ctx.channel.id)
     models = load_model()
     openai_model = models[dataHandler.data.activeModel]["model_name"]
     client = openai.AsyncOpenAI(api_key=models[dataHandler.data.activeModel]["api_key"],base_url=models[dataHandler.data.activeModel]["url"])
 
     #webhook checking
-    webhooks = await ctx.channel.webhooks()
-    webhook = next((wh for wh in webhooks if wh.name == "Kuromi webhook"), None)
+    webhooks = await ctx.channel.webhooks() if ctx.guild else None
+    if webhooks:
+        webhook = next((wh for wh in webhooks if wh.name == "Kuromi webhook"), None)
+    else:
+        webhook = None
 
     #Grabs recent messages
     user_message_cache = deque(maxlen=cache)
@@ -54,7 +57,7 @@ async def chatWithAI(ctx: Union[discord.Message, discord.Interaction], name: str
         if name and messagex.author.id == webhook.id and messagex.author.display_name == name:
                 logger.info(f"webhook detect")
                 user_message_cache.appendleft(("assistant", messagex.content))
-        elif not name and messagex.author.id == ctx.guild.me.id:
+        elif not name and messagex.author.id == (ctx.guild.me.id if ctx.guild else ctx.channel.me.id):
                 logger.info(f"mainbot detect")
                 user_message_cache.appendleft(("assistant", messagex.content))
         else:
@@ -114,7 +117,7 @@ async def chatWithAI(ctx: Union[discord.Message, discord.Interaction], name: str
             await send_large_message(ctx, f"Bad Request error occurred: {str(e)}")
         except Exception as e:
         # Optional: Catch any other exceptions
-            send_large_message(ctx, f"An unexpected error occurred: {e}")
+            await send_large_message(ctx, f"An unexpected error occurred: {e}")
 
 async def openaiDescribe(ctx: discord.Message, image_url: str) -> str:
     models = load_model()
