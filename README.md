@@ -3,7 +3,7 @@
 
 A chatbot for roleplaying on your discord servers!
 
-![MIT License](https://img.shields.io/badge/License-Apache_2.0-green.svg)
+![MIT License](https://img.shields.io/badge/License-GPL_3.0-green.svg)
 
 ![Static Badge](https://img.shields.io/badge/Python-3.12-yellow)
 
