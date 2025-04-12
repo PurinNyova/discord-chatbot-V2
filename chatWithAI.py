@@ -122,7 +122,7 @@ async def chatWithAI(ctx: Union[discord.Message, discord.Interaction], name: str
 async def openaiDescribe(ctx: discord.Message, image_url: str) -> str:
     models = load_model()
     openai_model = models[str(VISION)]["model_name"]
-    client = openai.AsyncOpenAI(api_key=models["2"]["api_key"],base_url=models["2"]["url"])
+    client = openai.AsyncOpenAI(api_key=models[str(VISION)]["api_key"],base_url=models[str(VISION)]["url"])
 
     async with ctx.channel.typing():
         response = await client.chat.completions.create(

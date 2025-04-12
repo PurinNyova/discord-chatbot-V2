@@ -21,12 +21,23 @@ async def persona_autocomplete(interaction: discord.Interaction, current: str) -
     dataHandler = PersonalityManager(interaction.guild.id if interaction.guild else interaction.channel.id)
     personas = dataHandler.returnPersonas()
 
-
-    return [
+    retval = [
         discord.app_commands.Choice(name=persona, value=persona)
         for persona in personas
         if current.lower() in persona.lower() 
     ]
+    return retval
+
+async def autocomplete_models(interaction: discord.Interaction, current: str):
+    models = load_model()
+    options = []
+    
+    for i, model in enumerate(models.values()):
+        model_name = model.get('model_name', '')
+        if current.lower() in model_name.lower():
+            options.append(discord.app_commands.Choice(name=model_name, value=str(i)))
+    
+    return options
 
 @bot.event
 async def on_ready():
@@ -36,39 +47,40 @@ async def on_ready():
     await bot.tree.sync()
 
 @bot.tree.command(name="modelpick", description="Pick an AI model")
-@discord.app_commands.choices(option=[discord.app_commands.Choice(
-    name=modelsx["model_name"],
-    value=str(i)) for i, modelsx in enumerate(load_model().values())])
 @discord.app_commands.describe(option="Available Models")
-async def modelpick(interaction: discord.Interaction, option: discord.app_commands.Choice[str]):
+@discord.app_commands.autocomplete(option=autocomplete_models)
+async def modelpick(interaction: discord.Interaction, option: str):
     dataHandler = CacheManager(interaction.guild.id if interaction.guild else interaction.channel.id)
     models = load_model()
-    if option.value == 0:
-        logger.info(f"{models["0"]["url"]} selected, attempting connection.")
+    
+    if option == 0:
+        logger.info(f"{models['0']['url']} selected, attempting connection.")
         try:
-            response = requests.get(models["0"]["url"], timeout=5)  # 5 seconds timeout
+            response = requests.get(models['0']['url'], timeout=5)  # 5 seconds timeout
             if response.status_code == 200:
-                dataHandler.data.activeModel = option.value
+                dataHandler.data.activeModel = option
                 dataHandler.change_data()
-                await interaction.response.send_message(f"Model {option.value} selected and the {models["0"]["url"]} is online.")
+                await interaction.response.send_message(f"Model {option} selected and the {models['0']['url']} is online.")
             else:
                 await interaction.response.send_message(f"The endpoint returned status code: {response.status_code}. Endpoint may be offline.", ephemeral=True)
         except requests.exceptions.RequestException as e:
-            await interaction.response.send_message(f"The endpoint {models["0"]["url"]} is offline or there was an error: {e}", ephemeral=True)
+            await interaction.response.send_message(f"The endpoint {models['0']['url']} is offline or there was an error: {e}", ephemeral=True)
     else:
-        logger.info(f"{models[option.value]["url"]} selected, attempting connection.")
+        logger.info(f"{models[option]['url']} selected, attempting connection.")
         try:
-            response = requests.get(f"{models[option.value]["url"]}/models",
+            response = requests.get(f"{models[option]['url']}/models",
                                     timeout=5,
-                                    headers={"Authorization": f"Bearer {models[option.value]["api_key"]}"})  # 5 seconds timeout
+                                    headers={"Authorization": f"Bearer {models[option]['api_key']}"})  # 5 seconds timeout
             if response.status_code == 200:
-                dataHandler.data.activeModel = option.value
+                dataHandler.data.activeModel = option
                 dataHandler.change_data()
-                await interaction.response.send_message(f"Model {option.value} selected and the {models[option.value]["url"]} is online.", ephemeral=True)
+                await interaction.response.send_message(f"Model {option} selected and the {models[option]['url']} is online.", ephemeral=True)
             else:
                 await interaction.response.send_message(f"The endpoint returned status code: {response.status_code}. Endpoint may be offline.", ephemeral=True)
         except requests.exceptions.RequestException as e:
-            await interaction.response.send_message(f"The endpoint {models[option.value]["url"]} is offline or there was an error: {e}", ephemeral=True)
+            await interaction.response.send_message(f"The endpoint {models[option]['url']} is offline or there was an error: {e}", ephemeral=True)
+
+
 
 @bot.tree.command(name="persona", description="add a persona")
 @discord.app_commands.choices(option=[
@@ -172,7 +184,7 @@ async def personasystem(ctx: discord.Interaction, option: discord.app_commands.C
     discord.app_commands.Choice(name="Disabled", value=0)
 ])
 @discord.app_commands.describe(option="Enable or Disable", contextlength="Length of memory in messages")
-async def globalchat(interaction: discord.Interaction, option: discord.app_commands.Choice[int], contextlength:int = 12):
+async def globalchat(interaction: discord.Interaction, option: discord.app_commands.Choice[int], contextlength:int = 20):
     dataHandler = CacheManager(interaction.guild.id if interaction.guild else interaction.channel.id)
     if bool(option.value):
         logger.info(f"Global chat enabling in {interaction.channel.id}: {contextlength} messages")
