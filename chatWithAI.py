@@ -92,8 +92,8 @@ async def chatWithAI(ctx: Union[discord.Message, discord.Interaction], name: str
                 model=openai_model,
                 messages=content,
                 stream=True,
-                max_tokens=1000,
-                temperature=1
+                max_tokens=4000,
+                temperature=0.8
             )
             full_res = ""
             
@@ -102,9 +102,11 @@ async def chatWithAI(ctx: Union[discord.Message, discord.Interaction], name: str
             #        yield item
             
             async for chunk in stream: 
-                chunk_message = chunk.choices[0].delta.content
-                if chunk_message:
-                    full_res += chunk_message
+                # Only capture completion tokens, skip reasoning/thinking tokens
+                if hasattr(chunk.choices[0].delta, 'content'):
+                    chunk_message = chunk.choices[0].delta.content
+                    if chunk_message:
+                        full_res += chunk_message
             await send_large_message(ctx, full_res) if name is None else await send_webhook(ctx, full_res, name)
 
         except openai.AuthenticationError as e:
@@ -141,12 +143,14 @@ async def openaiDescribe(ctx: discord.Message, image_url: str) -> str:
             ],
             }
         ],
-        max_tokens=300,
+        max_tokens=4000,
         stream=True,
         )
         full_res = ""
         async for chunk in response: 
-                chunk_message = chunk.choices[0].delta.content
-                if chunk_message:
-                    full_res += chunk_message
+                # Only capture completion tokens, skip reasoning/thinking tokens
+                if hasattr(chunk.choices[0].delta, 'content'):
+                    chunk_message = chunk.choices[0].delta.content
+                    if chunk_message:
+                        full_res += chunk_message
         return full_res

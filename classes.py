@@ -18,14 +18,14 @@ class BaseManager:
     def createData(self, origin):
         raise NotImplementedError("Subclass must implement")
 
-    def change_data(self, other=None, delete=False, modify=False):
+    def change_data(self, other=None, delete=False):
         object = self.data if other is None else other
               # Modify the string (if needed)
         if delete:
             self.session.delete(object)
-        elif not modify:
+        else:
             self.session.add(object)
-        print(f"Change data invoke: {"delete" if delete else "modify" if modify else "add"}")
+        print(f"Change data invoke: {"delete" if delete else "add"}")
         self.session.commit()
 
 
@@ -47,6 +47,7 @@ class CacheManager(BaseManager):
                 activeSessions="[]",
                 globalChatTask="{}",
                 activeModel = "1",
+                activeImageModel = "8",
                 requireReply = False,
             )
         self.change_data(cache_record)
@@ -77,7 +78,7 @@ class PersonalityManager(BaseManager):
         self.data.name = name
         self.data.profilePicture = profile
         self.data.personality = personality
-        self.change_data(modify=True)
+        self.change_data()
     
     def returnPersonas(self, personaObject=False) -> Union[list[Persona], list]: #Returns a list of all persona in a server
         self.data = self.session.query(Persona).filter_by(origin=self.origin).all()

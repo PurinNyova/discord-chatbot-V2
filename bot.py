@@ -32,10 +32,25 @@ async def autocomplete_models(interaction: discord.Interaction, current: str):
     models = load_model()
     options = []
     
-    for i, model in enumerate(models.values()):
+    for key, model in models.items():
+        if not model.get('textgen', False):
+            continue
         model_name = model.get('model_name', '')
         if current.lower() in model_name.lower():
-            options.append(discord.app_commands.Choice(name=model_name, value=str(i)))
+            options.append(discord.app_commands.Choice(name=model_name, value=str(key)))
+    
+    return options
+
+async def autocomplete_image_models(interaction: discord.Interaction, current: str):
+    models = load_model()
+    options = []
+    
+    for key, model in models.items():
+        if not model.get('imggen', False):
+            continue
+        model_name = model.get('model_name', '')
+        if current.lower() in model_name.lower():
+            options.append(discord.app_commands.Choice(name=model_name, value=str(key)))
     
     return options
 
@@ -53,7 +68,11 @@ async def modelpick(interaction: discord.Interaction, option: str):
     dataHandler = CacheManager(interaction.guild.id if interaction.guild else interaction.channel.id)
     models = load_model()
     
-    if option == 0:
+    if option not in models or not models[option].get('textgen', False):
+        await interaction.response.send_message("Invalid text generation model selected.", ephemeral=True)
+        return
+    
+    if option == "0":
         logger.info(f"{models['0']['url']} selected, attempting connection.")
         try:
             response = requests.get(models['0']['url'], timeout=5)  # 5 seconds timeout
@@ -80,6 +99,32 @@ async def modelpick(interaction: discord.Interaction, option: str):
         except requests.exceptions.RequestException as e:
             await interaction.response.send_message(f"The endpoint {models[option]['url']} is offline or there was an error: {e}", ephemeral=True)
 
+
+
+@bot.tree.command(name="imagemodelpick", description="Pick an image generation model")
+@discord.app_commands.describe(option="Available Image Models")
+@discord.app_commands.autocomplete(option=autocomplete_image_models)
+async def imagemodelpick(interaction: discord.Interaction, option: str):
+    dataHandler = CacheManager(interaction.guild.id if interaction.guild else interaction.channel.id)
+    models = load_model()
+
+    if option not in models or not models[option].get('imggen', False):
+        await interaction.response.send_message("Invalid image generation model selected.", ephemeral=True)
+        return
+
+    logger.info(f"Image model {models[option]['model_name']} selected.")
+    try:
+        response = requests.get(f"{models[option]['url']}/models",
+                                timeout=5,
+                                headers={"Authorization": f"Bearer {models[option]['api_key']}"})
+        if response.status_code == 200:
+            dataHandler.data.activeImageModel = option
+            dataHandler.change_data()
+            await interaction.response.send_message(f"Image model set to {models[option]['model_name']}.", ephemeral=True)
+        else:
+            await interaction.response.send_message(f"The endpoint returned status code: {response.status_code}. Endpoint may be offline.", ephemeral=True)
+    except requests.exceptions.RequestException as e:
+        await interaction.response.send_message(f"The endpoint {models[option]['url']} is offline or there was an error: {e}", ephemeral=True)
 
 
 @bot.tree.command(name="persona", description="add a persona")
@@ -208,15 +253,18 @@ async def globalchat(interaction: discord.Interaction, option: discord.app_comma
     await interaction.response.send_message(f"Global chat {'enabled' if option.value else 'disabled'} in this channel{f' with {contextlength} messages context.' if option.value else ''}", ephemeral=True)
 
 @bot.tree.command(name="generate", description="Generate an image")
-@discord.app_commands.describe(prompt="The text prompt to generate the image from")
-async def generateimage(interaction: discord.Interaction, prompt: str):
+@discord.app_commands.describe(prompt="The text prompt to generate the image from", model="Optional: Override the active image model")
+@discord.app_commands.autocomplete(model=autocomplete_image_models)
+async def generateimage(interaction: discord.Interaction, prompt: str, model: Optional[str] = None):
     if not prompt.strip():
         await interaction.response.send_message("Please input a non-empty prompt", ephemeral=True)
         return
 
     await interaction.response.defer()
     try:
-        image_file = await generateImage(prompt)
+        dataHandler = CacheManager(interaction.guild.id if interaction.guild else interaction.channel.id)
+        image_model_key = model if model else (dataHandler.data.activeImageModel or "8")
+        image_file = await generateImage(prompt, model_key=image_model_key)
         await interaction.followup.send(content=f"Here is your image: {prompt}", file=image_file)
     except Exception as e:
         print(f"Error generating image: {e}")  # Log the error
