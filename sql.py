@@ -11,7 +11,8 @@ class Cache(Base):
     origin = Column(Integer, primary_key=True)
     activeSessions = Column(String, nullable=True)
     globalChatTask = Column(String, nullable=True)
-    activeModel = Column(VARCHAR(1), nullable=True)
+    activeModel = Column(VARCHAR(3), nullable=True)
+    activeImageModel = Column(VARCHAR(3), nullable=True)
     requireReply = Column(Boolean, nullable=False)
 
 class Persona(Base):
